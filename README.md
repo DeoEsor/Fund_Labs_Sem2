@@ -1,6 +1,6 @@
 # Fund_Labs_Sem2
  MYU
-#lab6
+# lab6
 . Опишите абстрактный класс TeX_convertible, содержащий
 единственную чистую виртуальную функцию с прототипом
 std::string convert() const;
