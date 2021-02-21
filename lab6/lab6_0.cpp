@@ -4,12 +4,12 @@
 
 class TeX_convertible{
     protected:
-        const std::string doc_tex='\\'+"documentclass{article}\n";
-            const std::string title_tex='\\'+"title{new}";
-            const std::string date_tex='\\'+"date{February 2021}";
-            const std::string begin_tex='\\'+"begin{document}";
-        const std::string end_tex='\\'+"end{document}";
-        const std::string iota_tex='\\'+"iota";
+        const std::string doc_tex="\\documentclass{article}";
+        const std::string title_tex="\\title{new}";
+        const std::string date_tex="\\date{February 2021}";
+        const std::string begin_tex="\\begin{document}";
+        const std::string end_tex="\\end{document}";
+        const std::string iota_tex="\\iota";
     public:
         std::string convert() const;//функция не может изменять члены-переменные того объекта,
         // к которому она принадлежит. Более того, из этой функции можно вызывать только такие же константные функции.
@@ -36,7 +36,7 @@ class complex : TeX_convertible{
 	    }
 
         std::string convert(){
-        return doc_tex+title_tex+date_tex+begin_tex +std::to_string(_a) +" "+std::to_string(_b)+ iota_tex +end_tex;
+            return doc_tex+title_tex+date_tex+begin_tex +std::to_string(_a) +" "+std::to_string(_b)+ iota_tex +end_tex;
         }
 
 };
