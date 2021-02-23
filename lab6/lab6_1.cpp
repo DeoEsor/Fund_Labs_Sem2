@@ -15,7 +15,7 @@ protected:
     const std::string end_tex = "\\end{document}";
     const std::string iota_tex = "\\iota";
     const std::string beginmatrix_tex = "\\begin{pmatrix}\n";
-    const std::string endmatrix_tex = "\\end{pmatrix}\n";
+    const std::string endmatrix_tex = "\\end{pmatrix}$\n";
 public:
     //функция не может изменять члены-переменные того объекта,
     // к которому она принадлежит. Более того, из этой функции можно вызывать только такие же константные функции.
@@ -73,13 +73,41 @@ public:
 
     matrix_square(const matrix_square& other)
     {
-        set_pointer(other.get_pointer());
         set_dimension(other.get_dimension());
+            a = new double* [dimension];
+        for (int i = 0; i < dimension; ++i)
+            a[i] = new double[dimension];
+
+        for (int i = 0; i < dimension; ++i)
+            for (int j = 0; j < dimension; ++j)
+                a[i][j] = other.a[i][j];
     }
-    matrix_square(const matrix_square& other, int dimension)
+    matrix_square(const matrix_square& other, int dim)
     {
-        set_pointer(other.get_pointer());
-        set_dimension(dimension);
+        set_dimension(dim);
+        a = new double* [dimension];
+        for(int i=0; i<dimension;i++)
+            a[i] = new double[dimension];
+        
+        for (int i = 0; i < dimension , i< other.dimension; ++i)
+            for (int j = 0; j < dimension , j<other.dimension; ++j)
+                a[i][j] = other.a[i][j];
+    }
+    matrix_square(const matrix_square& other, int dim, int it, int jt)
+    {
+        set_dimension(dim);
+        a = new double* [dimension];
+        for(int i=0; i<dimension;i++)
+            a[i] = new double[dimension];
+        
+        for (int i = 0; i < dimension , i< other.dimension; ++i){
+            if(i==it) continue;
+            for (int j = 0; j < dimension , j<other.dimension; ++j)
+            {   
+                if(j==jt) continue;
+                a[i][j] = other.a[i][j];
+            }
+        }
     }
     ~matrix_square() {
         for (int i = 0; i < dimension; i++)
@@ -153,6 +181,10 @@ public:
         return *this;
     }
 #pragma endregion
+    bool operator!=(const matrix_square& rightSummand)
+    {
+        return !((*this) == (rightSummand));
+    }
     bool operator==(const matrix_square& rightSummand)
     {
         bool flag = true;
@@ -192,7 +224,7 @@ public:
     friend double det(const matrix_square& obj)
     {
         try {
-            double d;
+            double d=1.0;
             int k = 1; //(-1) в степени i
             if (obj.get_dimension() < 1) throw - 1;
             if (obj.get_dimension() == 1) {
@@ -204,7 +236,7 @@ public:
                 return(d);
             }
             if (obj.get_dimension() > 2) {
-                for (int i = 0; i < obj.dimension - 1; i++)
+                for (int i = 0; i < obj.dimension - 1; i++)// Step 1 go to triangle form 
                 {
                     for(int j = i + 1; j < obj.dimension; j++)
                     {
@@ -213,9 +245,9 @@ public:
                         obj.a[j][k] -= obj.a[i][k] * koef;
                     }
                 }
-                for (int i = 0; i < obj.get_dimension(); i++) {
+                for (int i = 0; i < obj.get_dimension(); i++) //Step 2 Calcylate main... Diagonale
                     d*=obj.a[i][i];
-                }
+                
             }
             return(d);
         }
@@ -228,15 +260,17 @@ public:
     matrix_square& reverse(matrix_square& obj)//thru det //TODO:
     {
         try{
-            if( det(obj) != 0.0) {
-                for(int i = 0; i < dimension; i++){
-                    for(int j = 0; j < dimension; j++){
-                        int m = dimension - 1;
-                        int **temp_matr = new int * [m];
-                            for(int k = 0; k < m; k++)
-                                ;
+            matrix_square obr_matr;
+            double ddet=det(obj);
+            if( ddet != 0.0) {
+               for(int i = 0; i < obj.dimension; i++){
+                    for(int j = 0; j < obj.dimension; j++){
+                        int m = obj.dimension - 1;
+                        matrix_square interval(obj, m, i,j);//interval time be like I DONT KNOW
+                        obr_matr.a[i][j] = pow(-1.0, i + j + 2) * det(interval) / ddet;
                     }
                 }
+                return transpon(obr_matr);   
             }
             else throw -1;
         }
@@ -244,7 +278,7 @@ public:
             perror("Imposible to calculate reverse matrix bcs determinant of matrix=0");
         }
     }
-    matrix_square& Transpon(const matrix_square& obj)
+    matrix_square& transpon(const matrix_square& obj)
     {
         for (int i = 0; i < get_dimension(); i++)
             for (int j = 0; j < get_dimension(); j++)
@@ -252,14 +286,21 @@ public:
 
         return(*this);
     }
+    friend double trace(const matrix_square& obj)
+    {
+        double sum=0.0;
+        for(int i=0;i<obj.dimension;i++)
+            sum+=obj.a[i][i];
+        return sum;
+    }
     friend double exp(const matrix_square& obj)
     {
-
+        
     }
 #pragma endregion
 
     std::string convert() const {
-        std::string str = mathpakage_tex + doc_tex + title_tex + date_tex + begin_tex + '\n' + "A_{" + std::to_string(dimension)
+        std::string str = mathpakage_tex + doc_tex + title_tex + date_tex + begin_tex + '\n' + "$A_{" + std::to_string(dimension)
             + ',' + std::to_string(dimension) + "}=\n" + beginmatrix_tex;
         for (int i = 0; i < dimension; i++)
             for (int j = 0; j < dimension; j++)
