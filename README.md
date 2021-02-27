@@ -2,8 +2,8 @@
  | Lab | Mark |
 | ------ | ------ |
 | lab6 | Not ready |
-| lab7 | Unchkeced |
-| lab8 | Unchkeced |
+| lab7 | Untested |
+| lab8 | Untested |
 
 # lab6
 
