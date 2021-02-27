@@ -1,7 +1,11 @@
 # Fund_Labs_Sem2
  | Lab | Mark |
 | ------ | ------ |
+| lab6 |  | Lab | Mark |
+| ------ | ------ |
 | lab6 | Not ready |
+| lab7 | Untested |
+| lab8 | Untested | |
 | lab7 | Untested |
 | lab8 | Untested |
 
