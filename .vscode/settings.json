@@ -41,6 +41,17 @@
         "cctype": "cpp",
         "sstream": "cpp",
         "string": "cpp",
-        "fstream": "cpp"
+        "fstream": "cpp",
+        "map": "cpp",
+        "vector": "cpp",
+        "xtree": "cpp",
+        "list": "cpp",
+        "thread": "cpp",
+        "unordered_map": "cpp",
+        "chrono": "cpp",
+        "deque": "cpp",
+        "forward_list": "cpp",
+        "ratio": "cpp",
+        "xhash": "cpp"
     }
 }
