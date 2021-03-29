@@ -1,0 +1,10 @@
+A= 2 0 1 2 3
+A *1
+B= 2 0 1 2 3
+A *B
+dim A 
+trace A 
+det A  
+tranc A 
+exp A 
+reverse A 

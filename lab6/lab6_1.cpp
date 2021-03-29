@@ -48,11 +48,11 @@ public:
     matrix_square(int b = 2) : dimension(b) {
         a = new double* [dimension];
 
-        for (int i = 0; i < dimension; ++i)
+        for (int i = 0; i < dimension; i++)
             a[i] = new double[dimension];
 
-        for (int i = 0; i < dimension; ++i)
-            for (int j = 0; j < dimension; ++j)
+        for (int i = 0; i < dimension; i++)
+            for (int j = 0; j < dimension; j++)
                 i == j ? a[i][j] = 1 : a[i][j] = 0;
     };
 
@@ -78,16 +78,15 @@ public:
         return a;
     }
 
-    matrix_square(const matrix_square& other)
+    matrix_square(const matrix_square& other) 
     {
-        set_dimension(other.get_dimension());
-        a = new double* [dimension];
-        for (int i = 0; i < dimension; ++i)
+        a = new double* [other.dimension];
+        dimension = other.dimension;
+        for (int i = 0; i < dimension; i++){
             a[i] = new double[dimension];
-
-        for (int i = 0; i < dimension; ++i)
-            for (int j = 0; j < dimension; ++j)
+            for (int j = 0; j < dimension; j++)
                 a[i][j] = other.a[i][j];
+        }
     }
     matrix_square(const matrix_square& other, int dim)
     {
@@ -96,24 +95,30 @@ public:
         for (int i = 0; i < dimension; i++)
             a[i] = new double[dimension];
 
-        for (int i = 0; i < dimension, i < other.dimension; ++i)
-            for (int j = 0; j < dimension, j < other.dimension; ++j)
+        for (int i = 0; i < dimension, i < other.dimension; i++)
+            for (int j = 0; j < dimension, j < other.dimension; j++)
                 a[i][j] = other.a[i][j];
     }
     matrix_square(const matrix_square& other, int dim, int it, int jt)
     {
-        set_dimension(dim);
-        a = new double* [dimension];
-        for (int i = 0; i < dimension; i++)
-            a[i] = new double[dimension];
-
-        for (int i = 0; i < dimension, i < other.dimension; ++i) {
-            if (i == it) continue;
-            for (int j = 0; j < dimension, j < other.dimension; ++j)
-            {
-                if (j == jt) continue;
-                a[i][j] = other.a[i][j];
+        try{
+            set_dimension(dim);
+            a = new double* [dim];
+            for (int i = 0; i < dim; i++)
+                a[i] = new double[dim];
+            int g=0,h = 0;
+            for (int i = 0; i < dimension+1; i++) {
+                if (i == it) continue;
+                for (int j = 0; j < dimension+1; j++)
+                {
+                    if (j == jt) continue;
+                    a[g][h++] = other.a[i][j];
+                }
+                g++;
             }
+        }
+        catch (int a) {
+            std::cout << "Dimension Exception";
         }
     }
     ~matrix_square() {
@@ -162,21 +167,24 @@ public:
         return (*this);
     }
 
-    matrix_square& operator*(const matrix_square& rightSummand)
-    {
-        return (*this) *= rightSummand;
-    }
     matrix_square& operator*=(const matrix_square& rightSummand)
     {
-        matrix_square ret(get_dimension());
-        for (int i = 0; i < get_dimension(); i++)
-            for (int j = 0; j < get_dimension(); j++)
-            {
-                ret.a[i][j] = 0;
-                for (int k = 0; k < get_dimension(); k++)
-                    ret.a[i][j] += (a[i][k] * rightSummand.a[k][j]);
+        try {
+            if (dimension != rightSummand.dimension) throw - 1;
+            matrix_square ret(dimension);
+            for (int i = 0; i < dimension; i++){
+                for (int j = 0; j < dimension; j++)
+                {
+                    ret.a[i][j] = 0;
+                    for (int k = 0; k < dimension; k++)
+                        ret.a[i][j] += (a[i][k] * rightSummand.a[k][j]);
+                }
             }
-        return ret;
+            return (*this)=(ret);
+        }
+        catch (int a) {
+            std::cout << "Dimension error";
+        }
     }
     matrix_square& operator*(const double rightSummand)
     {
@@ -184,54 +192,31 @@ public:
     }
     matrix_square& operator*=(const double rightSummand)
     {
-        for (int i = 0; i < get_dimension(); i++)
-            for (int j = 0; j < get_dimension(); j++)
+        for (int i = 0; i < dimension; i++)
+            for (int j = 0; j < dimension; j++)
                 a[i][j] *= rightSummand;
 
         return *this;
     }
-    matrix_square& operator/(const matrix_square& rightSummand)
-    {
-        return (*this) /= rightSummand;
-    }
-    matrix_square& operator/=(const matrix_square& rightSummand)
-    {
-        try {
-            if (get_dimension() == rightSummand.get_dimension()) {
-                matrix_square ret(get_dimension());
-                for (int i = 0; i < get_dimension(); i++)
-                    for (int j = 0; j < get_dimension(); j++)
-                    {
-                        ret.a[i][j] = 0;
-                        for (int k = 0; k <= get_dimension(); k++)
-                            ret.a[i][j] += (a[i][k] * rightSummand.a[k][j]);
-                    }
-                return (*this) * (reverse(rightSummand));
-            }
-            else throw "Dimension divisor error";
-        }
-        catch (std::string str) {
-            std::cout << str << std::endl;
-        }
-    }
     matrix_square& operator/(const double rightSummand)
     {
-        return (*this) *= pow(rightSummand, -1);
+        return (*this) *= pow(rightSummand,-1);
     }
 
-    void operator=(const matrix_square& rightSummand)
+    matrix_square& operator=(const matrix_square& rightSummand)
     {
-        if (rightSummand.get_dimension() != get_dimension()) set_dimension(rightSummand.get_dimension());
-        for (int i = 0; i < get_dimension(); i++)
-            for (int j = 0; j < get_dimension(); j++)
+        if (rightSummand.dimension != dimension) set_dimension(rightSummand.dimension);
+        for (int i = 0; i < dimension; i++)
+            for (int j = 0; j < dimension; j++)
                 a[i][j] = rightSummand.a[i][j];
+        return *this;
     }
 #pragma endregion
-    bool operator!=(const matrix_square& rightSummand)
+    bool const operator!=(const matrix_square& rightSummand)
     {
         return !((*this) == (rightSummand));
     }
-    bool operator==(const matrix_square& rightSummand)
+    bool const operator==(const matrix_square& rightSummand)
     {
         bool flag = true;
         if (dimension != rightSummand.dimension) return !flag;
@@ -240,7 +225,7 @@ public:
                 if (a[i][j] != rightSummand.a[i][j]) flag = false;
         return flag;
     }
-    double* operator[] (int i) {
+    const double* operator[] (int i) {
         try {
             if (i > dimension || sizeof(a[i]) != sizeof(double)) throw - 1;
             return a[i];
@@ -252,8 +237,8 @@ public:
     friend std::ofstream& operator<<(std::ofstream& stream, const matrix_square& obj)
     {
         stream << obj.dimension << std::endl;
-        for (int i = 0; i < obj.get_dimension(); i++) {
-            for (int j = 0; j < obj.get_dimension(); j++)
+        for (int i = 0; i < obj.dimension; i++) {
+            for (int j = 0; j < obj.dimension; j++)
                 stream << " " << obj.a[i][j];
             stream << std::endl;
         }
@@ -262,8 +247,8 @@ public:
     friend std::ifstream& operator>>(std::ifstream& stream, matrix_square& obj)
     {
         stream >> obj.dimension;
-        for (int i = 0; i < obj.get_dimension(); i++)
-            for (int j = 0; j < obj.get_dimension(); j++)
+        for (int i = 0; i < obj.dimension; i++)
+            for (int j = 0; j < obj.dimension; j++)
                 stream >> obj.a[i][j];
         return stream;
     }
@@ -271,32 +256,33 @@ public:
     friend double det(const matrix_square& obj)
     {
         try {
+            matrix_square it(obj);
             double d = 1.0;
             int k = 1; //(-1) в степени i
-            if (obj.get_dimension() < 1) throw - 1;
-            if (obj.get_dimension() == 1) {
-                d = obj.a[0][0];
+            if (it.dimension < 1) throw - 1;
+            if (it.dimension == 1) {
+                d = it.a[0][0];
                 return(d);
             }
-            if (obj.get_dimension() == 2) {
-                d = (obj.a[0][0] * obj.a[1][1]) - (obj.a[1][0] * obj.a[0][1]);
+            if (it.dimension == 2) {
+                d = (it.a[0][0] * it.a[1][1]) - (it.a[1][0] * it.a[0][1]);
                 return(d);
             }
-            if (obj.get_dimension() > 2) {
-                for (int i = 0; i < obj.dimension - 1; i++)// Step 1 go to triangle form 
+            if (it.dimension > 2) {
+                for (int i = 0; i < it.dimension - 1; i++)// Step 1 go to triangle form 
                 {
-                    for (int j = i + 1; j < obj.dimension; j++)
+                    for (int j = i + 1; j < it.dimension; j++)
                     {
-                        double koef = obj.a[j][i] / obj.a[i][i];
-                        for (int k = i; k < obj.dimension; k++)
-                            obj.a[j][k] -= obj.a[i][k] * koef;
+                        double koef = it.a[j][i] / it.a[i][i];
+                        for (int k = i; k < it.dimension; k++)
+                            it.a[j][k] -= it.a[i][k] * koef;
                     }
                 }
-                for (int i = 0; i < obj.get_dimension(); i++) //Step 2 Calcylate main... Diagonale
-                    d *= obj.a[i][i];
+                for (int i = 0; i < it.dimension; i++) //Step 2 Calcylate main... Diagonale
+                    d *= it.a[i][i];
 
             }
-            return(d);
+            return (d);
         }
         catch (int a) {
             perror("Imposible to calculate determination");
@@ -304,7 +290,7 @@ public:
         }
     }
 
-    friend matrix_square& reverse(const matrix_square& obj)//thru det //TODO:
+    friend void reverse(matrix_square& obj)//thru det //TODO:
     {
         try {
             matrix_square obr_matr;
@@ -313,11 +299,12 @@ public:
                 for (int i = 0; i < obj.dimension; i++) {
                     for (int j = 0; j < obj.dimension; j++) {
                         int m = obj.dimension - 1;
-                        matrix_square interval(obj, m, i, j);//interval time be like I DONT KNOW
+                        matrix_square interval(obj, m, i, j);
                         obr_matr.a[i][j] = pow(-1.0, i + j + 2) * det(interval) / ddet;
                     }
                 }
-                return transpon(obr_matr);
+                transpon(obr_matr);
+                obj = obr_matr;
             }
             else throw - 1;
         }
@@ -325,14 +312,14 @@ public:
             perror("Imposible to calculate reverse matrix bcs determinant of matrix=0");
         }
     }
-    friend matrix_square& transpon(const matrix_square& obj)
+    friend void transpon(matrix_square& obj)
     {
-        matrix_square it(obj.get_dimension());
-        for (int i = 0; i < obj.get_dimension(); i++)
-            for (int j = 0; j < obj.get_dimension(); j++)
+        matrix_square it(obj.dimension);
+        for (int i = 0; i < obj.dimension; i++)
+            for (int j = 0; j < obj.dimension; j++)
                 it.a[j][i] = obj.a[i][j];
 
-        return(it);
+        obj=(it);
     }
     friend double trace(const matrix_square& obj)
     {
@@ -341,33 +328,33 @@ public:
             sum += obj.a[i][i];
         return sum;
     }
-    friend matrix_square& pow(const matrix_square& obj, int j)
+    friend void pow(matrix_square& obj, int j)
     {
-        matrix_square piw(obj);
+        matrix_square piw = obj;
         for (int i = 1; i < j; i++)
             piw *= obj;
-        return piw;
+        obj= piw;
     }
-    friend matrix_square& exp(const matrix_square& obj)
+    friend void exp(matrix_square& obj)
     {
         matrix_square sum(obj.dimension);
-        sum = 0;
         matrix_square nextit(obj.dimension);
         int i = 1;
-        while (trace(nextit) > e) {
+        while (det(nextit) > e) {
             sum += nextit;
-            nextit = (pow(obj, i) * pow(fact(i), -1));
+            nextit = ( obj * pow(fact(i), -1));
+            obj *= obj;
         }
-        return sum;
+        obj= sum;
     }
 #pragma endregion
 
     std::string convert() const override {
-        std::string str = "_{" + std::to_string(dimension) + ',' + std::to_string(dimension) + "}=\n"
+        std::string str = "_{" + std::to_string(dimension) + ',' + std::to_string(dimension) + "} = \n"
             + beginmatrix_tex;
         for (int i = 0; i < dimension; i++)
             for (int j = 0; j < dimension; j++)
-                j == dimension - 1 ? str += (std::to_string(a[i][j]) + " \\\\ \n") :
+                j == (dimension - 1) ? str += (std::to_string(a[i][j]) + " \\\\ \n") :
                 str += (std::to_string(a[i][j]) + " & ");
 
         return str + endmatrix_tex;
@@ -391,7 +378,8 @@ int main() {
     std::ifstream text("1.txt");       std::ofstream f("lab6_1.tex");
     matrix_square matrix;              TeX_convertible* super = &matrix;
     f << (*super).Begin_Tex();
-    char c = ' '; char matr = ' '; std::string matrix_oper = "";
+    char c = ' '; char matr = ' '; 
+    std::string matrix_oper = "";
     std::map <char, matrix_square> mp;
     std::map<char, matrix_square>::iterator it;
     while (text.get(c)) {
@@ -418,19 +406,31 @@ int main() {
                 }
                 text.get(c); matr = c;
                 if (matrix_oper == "exp") {
-                    f << "Exponent of matrix $" << matr << "$ is matrix $Exp" << exp(mp[matr]).convert() << std::endl;
+                    
+                    f << "Exponent of matrix $" << matr << "$=" << (mp[matr]).convert();
+                    exp(mp[matr]);
+                    f << "is matrix $Exp" <<
+                        (mp[matr]).convert() << std::endl;
                 }
                 if (matrix_oper == "tranc") {
-                    f << "Transponet of matrix $" << matr << "$ is matrix $T" << transpon(mp[matr]).convert() << std::endl;
+                    transpon(mp[matr]);
+                    f << "Transponet of matrix $" << matr << "$ is matrix $T" <<
+                        (mp[matr]).convert() << std::endl;
                 }
                 if (matrix_oper == "trace") {
                     f << "Trace of matrix $" << matr << "$ is $" << trace(mp[matr]) << "$" << std::endl;
                 }
                 if (matrix_oper == "det") {
-                    f << "Determinant of matrix $" << matr << "$ is $" << exp(mp[matr]).convert() << "$" << std::endl;
+                    f << "Determinant of matrix $" << matr << "$ = $" << 
+                        (mp[matr]).convert() << "$" << "$ is $"<< det(mp[matr]) << "$"<< std::endl;
                 }
                 if (matrix_oper == "reverse") {
-                    f << "Reverse matrix of matrix $" << matr << "$ is matrix $Reverse" << reverse(mp[matr]).convert() << std::endl;
+                    matrix_square it(mp[matr]);
+                    reverse(mp[matr]);
+                    f << "Reverse matrix of matrix $" << matr << "$ is matrix $Reverse" 
+                        << (mp[matr]).convert() << std::endl;
+                    it *= mp[matr];
+                    f << "Check" << (it).convert()<< std::endl;
                 }
                 if (matrix_oper == "dim") {
                     f << "Dimension of matrix $" << matr << "$ is $" << mp[matr].get_dimension() << std::endl;
@@ -440,15 +440,19 @@ int main() {
         if (c == '+') {
             text.get(c);
             if (isalpha(c))
-                f << "Sum of $" << matr << "$ and $" << c << "$is $Sum" << (mp[matr] + mp[c]).convert() << std::endl;
+                f << "Sum of $" << matr << "$ and $" << c << "$is $Sum" 
+                << (mp[matr] + mp[c]).convert() << std::endl;
             else
-                f << "Sum of $" << matr << "$ and $" << c << "$is $Sum" << (mp[matr] + ((c - '0') * 1.0)).convert() << std::endl;
+                f << "Sum of $" << matr << "$ and $" << c << "$is $Sum" 
+                << (mp[matr] + ((c - '0') * 1.0)).convert() << std::endl;
         }
         if (c == '-') {
             text.get(c);
             if (isalpha(c))
-                f << "Sum of $" << matr << "$ and $-" << c << "$is $NotSum" << (mp[matr] - mp[c]).convert() << std::endl;
-            else f << "Sum of $" << matr << "$ and $-" << c << "$is $NotSum" << (mp[matr] - ((c - '0') * 1.0)).convert() << std::endl;
+                f << "Sum of $" << matr << "$ and $-" << c << "$is $NotSum" <<
+                (mp[matr] - mp[c]).convert() << std::endl;
+            else f << "Sum of $" << matr << "$ and $-" << c << "$is $NotSum" <<
+                (mp[matr] - ((c - '0') * 1.0)).convert() << std::endl;
         }
         if (c == '=') {
             text.get(c);
@@ -472,17 +476,12 @@ int main() {
         if (c == '*') {
             text.get(c);
             if (isalpha(c)) {
-                matrix_square it;
-                it = mp[matr] * mp[c];
-                f << "Сomposition of $" << matr << "$ and $" << c << "$is $Сomposition" << (it).convert() << std::endl;
+                mp[matr] *= mp[c];
+                f << "Сomposition of $" << matr << "$ and $" << c 
+                    << "$is $ Сomposition" << (mp[matr]).convert() << std::endl;
             }
-            else f << "Сomposition of $" << matr << "$ and $" << c << "$is $Сomposition" << (mp[matr] * ((c - '0') * 1.0)).convert() << std::endl;
-        }
-        if (c == '/') {
-            text.get(c);
-            if (isalpha(c))
-                f << "division of $" << matr << "$ and $" << c << "$is division" << (mp[matr] / mp[c]).convert() << std::endl;
-            else f << "division of $" << matr << "$ and $" << c << "$is division" << (mp[matr] / ((c - '0') * 1.0)).convert() << std::endl;
+            else f << 'С'+"omposition of $" << matr << "$ and $" << c <<
+                "$is $ Сomposition" << (mp[matr] * ((c - '0') * 1.0)).convert() << std::endl;
         }
     }
     f << (*super).End_Tex();
