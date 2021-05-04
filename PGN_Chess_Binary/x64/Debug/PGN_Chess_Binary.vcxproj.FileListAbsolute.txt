@@ -1,0 +1,2 @@
+C:\Users\Rulia\source\repos\PGN_Chess_Binary\x64\Debug\PGN_Chess_Binary.exe
+C:\Users\Rulia\source\repos\PGN_Chess_Binary\x64\Debug\PGN_Chess_Binary.pdb
