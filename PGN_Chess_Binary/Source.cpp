@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <fstream>
+#include <cstring>
 
 using namespace std;
 string Meta_binary(vector<string> text);
@@ -66,7 +67,16 @@ bool SortNode(const Node* a, const Node* b)//comparator
 {
     return a->count < b->count;
 }
+class Chess_Exception {
+public:
+    string error;
+    Chess_Exception(string str):error(str){}
 
+    void Print() {
+        cerr << error<<endl;
+    }
+
+};
 string Decode(string& str, map<vector<bool>, char>& table)
 {
     string out = "";
@@ -85,31 +95,56 @@ string Decode(string& str, map<vector<bool>, char>& table)
 
 int main()
 {
-    string path, raw;
+    int step = 0;;
+    string path, raw, king_pos[2]; 
+    king_pos[0] = ""; king_pos[1] = "";
     cout << "Input PGN file path : ";
     cin >> path;
     ofstream output;               ifstream in(path);
-    int step = 0; int last = 0;
-    int n = 5;
+
+    int n = 5; int last = 0; int result = 0; int begin_game = 0;
     map<char, int> symbols;
-    vector<string> text(700);
+    vector<string> text(700);  vector<string>::iterator it;
     output.open("output.bin");
 
     if (in.is_open())
     {
+        
         int i= 0;
-        while (in >> raw)
-        {
-            if (raw[0] == '\n') { } //TODO: to optimize (precompile)
-            if (raw[0] == '{' || *(--raw.cend()) == '}') { continue; }
-            if (isdigit(raw[0])) { step++; continue; }
-            text[i++] = raw; 
-            if (i + 1 == n) text.resize(n+i); n += i;
-            for (int j = 0; j < raw.length(); j++)
-                symbols[raw[j]]++;//frequence
-            if (*(--(--raw.cend())) == ']') last = i-1;
+        try {
+            while (in >> raw)
+            {
+                if (raw == king_pos[(i-begin_game) % 2]) throw Chess_Exception(" Trying to Kill the KING!!!"); // even - white, odd - black
+                /*if (raw[raw.length() - 1] == ']') {
+                    text[i++] = " " + '\n'; symbols['\n']++;
+                } //TODO: to optimize (precompile)*/
+                if (raw[0] == '[') { text[i++] = '\n'; symbols['\n']++; last = i + 1; }
+                if (isalpha(raw[0])) { symbols[' ']++;  text[i++] = " "; }
+                if (raw[0] == '{' || *(--raw.cend()) == '}') { continue; }
+                if (isdigit(raw[0])) { step++; continue; }
+                text[i++] = raw;
+                if (i + 1 == n) text.resize(n + i); n += i;
+                for (int j = 0; j < raw.length(); j++)
+                    symbols[raw[j]]++;//frequence
+                if (strstr(raw.c_str(), "Result") != NULL) result = i;;
+                if (raw[0] == 'K') king_pos[(i - begin_game) % 2] = raw;
+
+                it = find(text.begin(), text.end(), raw);
+                if (it != text.end() && ((it-text.begin() - begin_game)%2 == (i-begin_game)%2) && begin_game!=0)
+                    throw Chess_Exception("Trying to eat figure of own color");
+                
+            }
         }
+        catch (Chess_Exception e) {
+            e.Print(); return -404;
+        }
+        text[i++] = ' ';
+        text[i++] = '\n'; text[i]="[" + text[result]; symbols['\n']++; symbols['[']++;
+        
     }
+    text[last]+=" " +  to_string(step)+ " ";
+
+    symbols[step % 10]++; symbols[step / 10]++;
 
     int a = 0;
 
@@ -120,13 +155,6 @@ int main()
         Node* p = new Node(itr->first, itr->second);
         trees.push_back(p);
     }
-    if (trees.size() == 0) {
-        cout << "File is empty" << endl;
-        system("pause");
-        return 0;
-    }
-    else
-    {
         
             while (trees.size() != 1)
             {
@@ -163,9 +191,8 @@ int main()
             for (int a = 0; a < text.size(); a++) {
 
                 raw = text[a];
-
+                if (a == last);
                 for (int i = 0; i < raw.length(); i++)
-                    if(i==last)
                     for (int j = 0; j < table[raw[i]].size(); j++)
                     {
                         out += table[raw[i]][j] + '0';
@@ -187,7 +214,6 @@ int main()
             cout<< " " +Decode(out, ftable) << endl;
 
             system("pause");
-    }
     in.close();
     output.close();
     return 0;
