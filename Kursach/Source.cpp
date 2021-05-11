@@ -2,147 +2,263 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <iterator>
 
 #pragma region List class realization + iterator
 template<class T>
-class List {
-    T value;
-    List* next = nullptr;
-    List* prev = nullptr;
-
-
-    List* List() // а- значение первого узла
-    {
-        List* lst;
-        // выделение памяти под корень списка
-        lst = (List*)malloc(sizeof(List));
-        lst->next = nullptr;
-        lst->prev = nullptr;
-        return(lst);
-    }
-
-
-    List* push(List* lst, _Ticket* a)  // а- значение первого узла
-    {
-        lst->next = (List*)malloc(sizeof(List));
-        lst->next->value = a;
-        lst->next->prev = lst;
-        lst = lst->next;
-        return(lst);
-    }
-};
-
-template<typename ValueType>
-class ListIterator : public std::iterator<std::input_iterator_tag, ValueType>
-{
-    friend class List;
-private:
-    OwnIterator(ValueType* p);
-    ValueType* p;
+class Node {
 public:
-    OwnIterator(const OwnIterator& it);
+    T* value = nullptr;
+    Node* next = nullptr;
+    Node* prev = nullptr;
 
-    bool operator!=(OwnIterator const& other) const;
-    bool operator==(OwnIterator const& other) const; //need for BOOST_FOREACH
-    typename OwnIterator::reference operator*() const;
-    OwnIterator& operator++();
-
-    template<typename ValueType>
-    OwnIterator<ValueType>::OwnIterator(ValueType* p) :
-        p(p)
-    {
-
-    }
-
-    template<typename ValueType>
-    OwnIterator<ValueType>::OwnIterator(const OwnIterator& it) :
-        p(it.p)
-    {
-
-    }
-
-    template<typename ValueType>
-    bool OwnIterator<ValueType>::operator!=(OwnIterator const& other) const
-    {
-        return p != other.p;
-    }
-
-    template<typename ValueType>
-    bool OwnIterator<ValueType>::operator==(OwnIterator const& other) const
-    {
-        return p == other.p;
-    }
-
-    template<typename ValueType>
-    typename OwnIterator<ValueType>::reference OwnIterator<ValueType>::operator*() const
-    {
-        return *p;
-    }
-    template<typename ValueType>
-    OwnIterator<ValueType>& OwnIterator<ValueType>::operator++()
-    {
-        ++p;
-        return *this;
+    Node(T& val): value(val) {
     }
 };
+template<class T>
+class List {
+private:
+    Node<T>* begin = nullptr;
+    Node<T>* end = nullptr;
+public:
+    Node<T>* current = nullptr;
+    List() {
+        begin = (Node<T>*) malloc(sizeof(Node<T>));
+        current = end = begin;
+    }
 
+    List( T* val)
+    {
+        begin = (Node<T>*) malloc(sizeof(Node<T>));
+        begin->value = val;
+        current= end = begin;
+    }
+
+    List* push_back(T* a) 
+    {
+        end->next = (Node<T>*)malloc(sizeof(Node<T>));
+        end->next->value = a;
+        end->next->prev = end;
+        end = end->next;
+        return(this);
+    }
+
+    List* push_front(T* a)  
+    {
+        begin->prev = (Node<T>*)malloc(sizeof(Node<T>));
+        begin->prev->value = a;
+        begin->prev->next = begin;
+        begin = begin->prev;
+        return(this);
+    }
+
+    T pop_back()  
+    {
+        T val = end->value;
+        delete end->value;
+        end = end->prev;
+        end->next->prev = nullptr;
+        free(end->next);
+        end->next = nullptr;
+        return(val);
+    }
+
+    T pop_front() 
+    {
+        T val = begin->value;
+        delete begin->value;
+        begin = begin->next;
+        begin->prev->next = nullptr;
+        free(begin->prev);
+        begin->prev = nullptr;
+        return(val);
+    }
+
+    int del(const int i) {
+        Node<T> it = begin;
+        for (int h = 0; h < i, it!=end; h++)
+            it = it->next;
+        if (it==end) return -1;
+
+        return 0;
+    }
+
+    int del(Node<T> it) {
+        Node<T> it = begin;
+        for (int h = 0; it != end; h++)
+            if (it == end) return -1;
+        
+
+        return 0;
+    }
+
+    Node<T>* began() {
+        return begin;
+    }
+
+    Node<T>* enda() {
+        return end;
+    }
+};
+/*
+struct Position {
+    int* p;
+    Position(int* p) : p(p) {}
+
+    int& dereference() const; // РџРѕР»СѓС‡РµРЅРёРµ С‚РµРєСѓС‰РµРіРѕ СЌР»РµРјРµРЅС‚Р°.
+    bool equal(const Position& other) const; // РџСЂРѕРІРµСЂРєР° РЅР° СЂР°РІРµРЅСЃС‚РІРѕ.
+    void increment(); // РџРµСЂРµРјРµС‰РµРЅРёРµ РІРїРµСЂРµРґ.
+    void decrement(); // РџРµСЂРµРјРµС‰РµРЅРёРµ РЅР°Р·Р°Рґ.
+    void advance(std::ptrdiff_t n);  // РџРµСЂРµРјРµС‰РµРЅРёРµ РЅР° "n" СЌР»РµРјРµРЅС‚РѕРІ.
+    std::ptrdiff_t distance_to(const Position& other) const; // Р Р°СЃСЃС‚РѕСЏРЅРёРµ РґРѕ РґСЂСѓРіРѕР№ РїРѕР·РёС†РёРё.
+};
+template<class T>
+struct iterator : std::iterator<std::random_access_iterator_tag, T> {
+    // Р’Р»РѕР¶РµРЅРЅС‹Р№ РѕР±СЉРµРєС‚ Position, Рё РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РґР»СЏ РЅРµРіРѕ.
+    Position pos;
+    iterator(Position pos) : pos(pos) {}
+
+    // РћРїРµСЂР°С†РёРё, РЅРµРѕР±С…РѕРґРёРјС‹Рµ РґР»СЏ РІСЃРµС… РєР°С‚РµРіРѕСЂРёР№ РёС‚РµСЂР°С‚РѕСЂРѕРІ.
+    iterator() = default;
+    iterator(const iterator&) = default;
+    iterator& operator=(const iterator&) = default;
+    ~iterator() = default;
+    reference operator*() const { return pos.dereference(); }
+    iterator& operator++() { pos.increment(); return *this; }
+    iterator operator++(int) { auto old = *this; ++(*this); return old; }
+
+    // РћРїРµСЂР°С†РёРё, РЅРµРѕР±С…РѕРґРёРјС‹Рµ РґР»СЏ InputIterator.
+    pointer operator->() const;
+
+    // РћРїРµСЂР°С†РёРё, РЅРµРѕР±С…РѕРґРёРјС‹Рµ РґР»СЏ BidirectionalIterator.
+    iterator& operator--() { pos.decrement(); return *this; }
+    iterator operator--(int) { auto old = *this; --(*this); return old; }
+
+    // РћРїРµСЂР°С†РёРё, РЅРµРѕР±С…РѕРґРёРјС‹Рµ РґР»СЏ RandomAccessIterator.
+    reference operator[](difference_type n) const { auto tmp = *this; tmp += n; return *tmp; }
+    iterator& operator+=(difference_type n) { pos.advance(n); return *this; }
+    iterator& operator-=(difference_type n) { return *this += -n; }
+
+
+// РћРїРµСЂР°С†РёРё, РЅРµРѕР±С…РѕРґРёРјС‹Рµ РґР»СЏ РІСЃРµС… РєР°С‚РµРіРѕСЂРёР№ РёС‚РµСЂР°С‚РѕСЂРѕРІ.
+void swap(iterator& a, iterator& b) { std::swap(a.pos, b.pos); }
+
+// РћРїРµСЂР°С†РёРё, РЅРµРѕР±С…РѕРґРёРјС‹Рµ РґР»СЏ InputIterator.
+bool operator==(const iterator& lhs, const iterator& rhs) { return lhs.pos.equal(rhs.pos); }
+bool operator!=(const iterator& lhs, const iterator& rhs) { return !(lhs == rhs); }
+
+// РћРїРµСЂР°С†РёРё, РЅРµРѕР±С…РѕРґРёРјС‹Рµ РґР»СЏ RandomAccessIterator.
+bool operator<(const iterator& lhs, const iterator& rhs) { return lhs.pos.distance_to(rhs.pos) > 0; }
+bool operator>(const iterator& lhs, const iterator& rhs) { return rhs < lhs; }
+bool operator<=(const iterator& lhs, const iterator& rhs) { return !(rhs > lhs); }
+bool operator>=(const iterator& lhs, const iterator& rhs) { return !(lhs < rhs); }
+iterator operator+(iterator it, iterator::difference_type n) { it += n; return it; }
+iterator operator+(iterator::difference_type n, iterator it) { return it + n; }
+iterator operator-(iterator it, iterator::difference_type n) { it -= n; return it; }
+iterator::difference_type operator-(const iterator& lhs, const iterator& rhs) { return rhs.pos.distance_to(lhs.pos); }
+};
+//----------------------------------------------------------------------------------------
+
+int& Position::dereference() const { return *p; }
+bool Position::equal(const Position& other) const { return p == other.p; }
+void Position::increment() { ++p; }
+void Position::decrement() { --p; }
+void Position::advance(std::ptrdiff_t n) { p += n; }
+std::ptrdiff_t Position::distance_to(const Position& other) const { return other.p - p; }
+
+*/
 #pragma endregion
 
 #pragma region Abstract Factory
 /**
-  Каждый отдельный продукт семейства продуктов должен иметь базовый интерфейс.
-  Все вариации продукта должны реализовывать этот интерфейс.
+  РљР°Р¶РґС‹Р№ РѕС‚РґРµР»СЊРЅС‹Р№ РїСЂРѕРґСѓРєС‚ СЃРµРјРµР№СЃС‚РІР° РїСЂРѕРґСѓРєС‚РѕРІ РґРѕР»Р¶РµРЅ РёРјРµС‚СЊ Р±Р°Р·РѕРІС‹Р№ РёРЅС‚РµСЂС„РµР№СЃ.
+  Р’СЃРµ РІР°СЂРёР°С†РёРё РїСЂРѕРґСѓРєС‚Р° РґРѕР»Р¶РЅС‹ СЂРµР°Р»РёР·РѕРІС‹РІР°С‚СЊ СЌС‚РѕС‚ РёРЅС‚РµСЂС„РµР№СЃ.
  */
 class Ticket {
+protected:
+    virtual void Fill_Ticket() = 0;
 public:
     virtual ~Ticket() {};
-    virtual void Fill_Ticket() = 0;
-    virtual std::string Operation() const =0;
+    virtual std::string Write() const =0;
 };
 
 /**
-  Конкретные продукты создаются соответствующими Конкретными Фабриками.
+  РљРѕРЅРєСЂРµС‚РЅС‹Рµ РїСЂРѕРґСѓРєС‚С‹ СЃРѕР·РґР°СЋС‚СЃСЏ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёРјРё РљРѕРЅРєСЂРµС‚РЅС‹РјРё Р¤Р°Р±СЂРёРєР°РјРё.
  */
 class Loto_Ticket : public Ticket {
 private:
+    int number;
+    int score;
     int first_field[3][5];
     int second_field[3][5];
-public:
+
     void Fill_Ticket() override {
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 5; j++)
             {
-                first_field[i][j] = rand()  % 90;
+                first_field[i][j] = rand() % 90;
                 second_field[i][j] = rand() % 90;
             }
     }
+public:
+    Loto_Ticket() {
+        this->Fill_Ticket();
+    }
 
-    std::string Operation() const override{
-        std::string output="";
+    std::string Write() const override{
+        std::string output = '\n'+'"' + "number" + '"' + ':' + number + ',' + '\n';
+        output += '"' +"score" + '"' + ':' + score+ ',' + '\n';
+
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 5; j++){
+                output += '"' + "first_field" + '"' + ':' + first_field[i][j] + ',' + '\n';
+                output += '"' + "second_field" + '"' + ':' + second_field[i][j] + ',' + '\n';
+            }
         return output;
     }
+
+    /*РїСЂРµРґРѕСЃС‚Р°РІСЊС‚Рµ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ
+    РїРѕРёСЃРєР° Р±РёР»РµС‚РѕРІ РїРѕ Р·Р°РґР°РЅРЅС‹Рј РєСЂРёС‚РµСЂРёСЏРј: РЅРѕРјРµСЂСѓ Р±РёР»РµС‚Р°, РІРµР»РёС‡РёРЅРµ РІС‹РёРіСЂС‹С€Р°, Рё
+    С‚. Рґ..
+    template<class T>
+    friend Loto_Ticket Find(const T& el,const int number) {
+        T::iterator it = el.begin();
+        while (it != el.end()) {
+            if(it->number==number)
+                return *it
+        }
+    }
+
+    template<class T>
+    friend T* Find(const T& el, const int score) {
+        T::iterator it = el.begin();
+        while (it != el.end()) {
+            if (it->score == score)
+                it;
+        }
+    }*/
 };
 
-/**
-  Базовый интерфейс другого продукта. Все продукты могут взаимодействовать друг
-  с другом, но правильное взаимодействие возможно только между продуктами одной
-  и той же конкретной вариации.
+/*
+  Р‘Р°Р·РѕРІС‹Р№ РёРЅС‚РµСЂС„РµР№СЃ РґСЂСѓРіРѕРіРѕ РїСЂРѕРґСѓРєС‚Р°. Р’СЃРµ РїСЂРѕРґСѓРєС‚С‹ РјРѕРіСѓС‚ РІР·Р°РёРјРѕРґРµР№СЃС‚РІРѕРІР°С‚СЊ РґСЂСѓРі
+  СЃ РґСЂСѓРіРѕРј, РЅРѕ РїСЂР°РІРёР»СЊРЅРѕРµ РІР·Р°РёРјРѕРґРµР№СЃС‚РІРёРµ РІРѕР·РјРѕР¶РЅРѕ С‚РѕР»СЊРєРѕ РјРµР¶РґСѓ РїСЂРѕРґСѓРєС‚Р°РјРё РѕРґРЅРѕР№
+  Рё С‚РѕР№ Р¶Рµ РєРѕРЅРєСЂРµС‚РЅРѕР№ РІР°СЂРёР°С†РёРё.
  */
 class Lotery_Machine {
-    /* Продукт B способен работать самостоятельно...*/
+    /* РџСЂРѕРґСѓРєС‚ B СЃРїРѕСЃРѕР±РµРЅ СЂР°Р±РѕС‚Р°С‚СЊ СЃР°РјРѕСЃС‚РѕСЏС‚РµР»СЊРЅРѕ...*/
 public:
     virtual ~Lotery_Machine() {};
     virtual void UsefulFunctionB() const = 0;
     /*
-      А также взаимодействовать с Продуктами A той же вариации.
+      Рђ С‚Р°РєР¶Рµ РІР·Р°РёРјРѕРґРµР№СЃС‚РІРѕРІР°С‚СЊ СЃ РџСЂРѕРґСѓРєС‚Р°РјРё A С‚РѕР№ Р¶Рµ РІР°СЂРёР°С†РёРё.
      
-      Абстрактная Фабрика гарантирует, что все продукты, которые она создает,
-      имеют одинаковую вариацию и, следовательно, совместимы.
+      РђР±СЃС‚СЂР°РєС‚РЅР°СЏ Р¤Р°Р±СЂРёРєР° РіР°СЂР°РЅС‚РёСЂСѓРµС‚, С‡С‚Рѕ РІСЃРµ РїСЂРѕРґСѓРєС‚С‹, РєРѕС‚РѕСЂС‹Рµ РѕРЅР° СЃРѕР·РґР°РµС‚,
+      РёРјРµСЋС‚ РѕРґРёРЅР°РєРѕРІСѓСЋ РІР°СЂРёР°С†РёСЋ Рё, СЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕ, СЃРѕРІРјРµСЃС‚РёРјС‹.
      */
     virtual void AnotherUsefulFunctionB(const Ticket& collaborator) const = 0;
 };
 
-/* Конкретные Продукты создаются соответствующими Конкретными Фабриками.*/
+/* РљРѕРЅРєСЂРµС‚РЅС‹Рµ РџСЂРѕРґСѓРєС‚С‹ СЃРѕР·РґР°СЋС‚СЃСЏ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёРјРё РљРѕРЅРєСЂРµС‚РЅС‹РјРё Р¤Р°Р±СЂРёРєР°РјРё.*/
 class Loto_Machine : public Lotery_Machine {
 public:
     void UsefulFunctionB() const override {
@@ -150,8 +266,8 @@ public:
             for (int j = 0;j < 5; j++)
                     ;
     }
-    /* Продукт B1 может корректно работать только с Продуктом A1. Тем не менее, он
-       принимает любой экземпляр Абстрактного Продукта А в качестве аргумента.
+    /* РџСЂРѕРґСѓРєС‚ B1 РјРѕР¶РµС‚ РєРѕСЂСЂРµРєС‚РЅРѕ СЂР°Р±РѕС‚Р°С‚СЊ С‚РѕР»СЊРєРѕ СЃ РџСЂРѕРґСѓРєС‚РѕРј A1. РўРµРј РЅРµ РјРµРЅРµРµ, РѕРЅ
+       РїСЂРёРЅРёРјР°РµС‚ Р»СЋР±РѕР№ СЌРєР·РµРјРїР»СЏСЂ РђР±СЃС‚СЂР°РєС‚РЅРѕРіРѕ РџСЂРѕРґСѓРєС‚Р° Рђ РІ РєР°С‡РµСЃС‚РІРµ Р°СЂРіСѓРјРµРЅС‚Р°.
      */
     void AnotherUsefulFunctionB(const Ticket& collaborator) const override {
         
@@ -159,126 +275,134 @@ public:
 };
 
 /**
-  Интерфейс Абстрактной Фабрики объявляет набор методов, которые возвращают
-  различные абстрактные продукты. Эти продукты называются семейством и связаны
-  темой или концепцией высокого уровня. Продукты одного семейства обычно могут
-  взаимодействовать между собой. Семейство продуктов может иметь несколько
-  вариаций, но продукты одной вариации несовместимы с продуктами другой.
+  РРЅС‚РµСЂС„РµР№СЃ РђР±СЃС‚СЂР°РєС‚РЅРѕР№ Р¤Р°Р±СЂРёРєРё РѕР±СЉСЏРІР»СЏРµС‚ РЅР°Р±РѕСЂ РјРµС‚РѕРґРѕРІ, РєРѕС‚РѕСЂС‹Рµ РІРѕР·РІСЂР°С‰Р°СЋС‚
+  СЂР°Р·Р»РёС‡РЅС‹Рµ Р°Р±СЃС‚СЂР°РєС‚РЅС‹Рµ РїСЂРѕРґСѓРєС‚С‹. Р­С‚Рё РїСЂРѕРґСѓРєС‚С‹ РЅР°Р·С‹РІР°СЋС‚СЃСЏ СЃРµРјРµР№СЃС‚РІРѕРј Рё СЃРІСЏР·Р°РЅС‹
+  С‚РµРјРѕР№ РёР»Рё РєРѕРЅС†РµРїС†РёРµР№ РІС‹СЃРѕРєРѕРіРѕ СѓСЂРѕРІРЅСЏ. РџСЂРѕРґСѓРєС‚С‹ РѕРґРЅРѕРіРѕ СЃРµРјРµР№СЃС‚РІР° РѕР±С‹С‡РЅРѕ РјРѕРіСѓС‚
+  РІР·Р°РёРјРѕРґРµР№СЃС‚РІРѕРІР°С‚СЊ РјРµР¶РґСѓ СЃРѕР±РѕР№. РЎРµРјРµР№СЃС‚РІРѕ РїСЂРѕРґСѓРєС‚РѕРІ РјРѕР¶РµС‚ РёРјРµС‚СЊ РЅРµСЃРєРѕР»СЊРєРѕ
+  РІР°СЂРёР°С†РёР№, РЅРѕ РїСЂРѕРґСѓРєС‚С‹ РѕРґРЅРѕР№ РІР°СЂРёР°С†РёРё РЅРµСЃРѕРІРјРµСЃС‚РёРјС‹ СЃ РїСЂРѕРґСѓРєС‚Р°РјРё РґСЂСѓРіРѕР№.
  */
 class AbstractFactory {
 public:
-    virtual Ticket* CreateProductA() const = 0;
-    virtual Lotery_Machine* CreateProductB() const = 0;
-    virtual void Create_Lotery(const int number) = 0;
+    virtual Ticket* CreateTicket() const = 0;
+    virtual Lotery_Machine* CreateMachine() const = 0;
 };
 
 /*
-  Конкретная Фабрика производит семейство продуктов одной вариации. Фабрика
-  гарантирует совместимость полученных продуктов. Обратите внимание, что
-  сигнатуры методов Конкретной Фабрики возвращают абстрактный продукт, в то
-  время как внутри метода создается экземпляр конкретного продукта.
+  РљРѕРЅРєСЂРµС‚РЅР°СЏ Р¤Р°Р±СЂРёРєР° РїСЂРѕРёР·РІРѕРґРёС‚ СЃРµРјРµР№СЃС‚РІРѕ РїСЂРѕРґСѓРєС‚РѕРІ РѕРґРЅРѕР№ РІР°СЂРёР°С†РёРё. Р¤Р°Р±СЂРёРєР°
+  РіР°СЂР°РЅС‚РёСЂСѓРµС‚ СЃРѕРІРјРµСЃС‚РёРјРѕСЃС‚СЊ РїРѕР»СѓС‡РµРЅРЅС‹С… РїСЂРѕРґСѓРєС‚РѕРІ. РћР±СЂР°С‚РёС‚Рµ РІРЅРёРјР°РЅРёРµ, С‡С‚Рѕ
+  СЃРёРіРЅР°С‚СѓСЂС‹ РјРµС‚РѕРґРѕРІ РљРѕРЅРєСЂРµС‚РЅРѕР№ Р¤Р°Р±СЂРёРєРё РІРѕР·РІСЂР°С‰Р°СЋС‚ Р°Р±СЃС‚СЂР°РєС‚РЅС‹Р№ РїСЂРѕРґСѓРєС‚, РІ С‚Рѕ
+  РІСЂРµРјСЏ РєР°Рє РІРЅСѓС‚СЂРё РјРµС‚РѕРґР° СЃРѕР·РґР°РµС‚СЃСЏ СЌРєР·РµРјРїР»СЏСЂ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ РїСЂРѕРґСѓРєС‚Р°.
  */
 class Loto_Fabrick : public AbstractFactory {
 public:
-    Ticket* CreateProductA() const override {
+    Ticket* CreateTicket() const override {
         return new Loto_Ticket();
     }
-    Lotery_Machine* CreateProductB() const override {
+    Lotery_Machine* CreateMachine() const override {
         return new Loto_Machine();
     }
     
-    void Create_Lotery(const int number)//should return collection of tickets (by decorator vector or list) and lotety machine
-    {
-        Lotery_Machine* product_b = CreateProductB();
-        for (int i = 0; i < number; i++)
-            Ticket* product_a = CreateProductA();
-
-    }
 };
 #pragma endregion
 
 #pragma region Decorator
-template<class T>
+
 class Decorator : public Ticket {
 protected:
-    T* component_;
-
+    Ticket* component_;
+    void Fill_Ticket()  override {}
 public:
-    Decorator(T* component) : component_(component) {
+    Decorator(Ticket* component) : component_(component) {
     }
+   
     /**
-      Декоратор делегирует всю работу обёрнутому компоненту.
+      Р”РµРєРѕСЂР°С‚РѕСЂ РґРµР»РµРіРёСЂСѓРµС‚ РІСЃСЋ СЂР°Р±РѕС‚Сѓ РѕР±С‘СЂРЅСѓС‚РѕРјСѓ РєРѕРјРїРѕРЅРµРЅС‚Сѓ.
      */
-    std::string Output() const override {
-        return this->component_->Operation();
+    std::string Write() const override {
+        return this->component_->Write();
     }
 };
 /**
-  Конкретные Декораторы вызывают обёрнутый объект и изменяют его результат
-  некоторым образом.
+  РљРѕРЅРєСЂРµС‚РЅС‹Рµ Р”РµРєРѕСЂР°С‚РѕСЂС‹ РІС‹Р·С‹РІР°СЋС‚ РѕР±С‘СЂРЅСѓС‚С‹Р№ РѕР±СЉРµРєС‚ Рё РёР·РјРµРЅСЏСЋС‚ РµРіРѕ СЂРµР·СѓР»СЊС‚Р°С‚
+  РЅРµРєРѕС‚РѕСЂС‹Рј РѕР±СЂР°Р·РѕРј.
  */
-template<class T>
 class TicketDecorator : public Decorator {
     /**
-      Декораторы могут вызывать родительскую реализацию операции, вместо того,
-      чтобы вызвать обёрнутый объект напрямую. Такой подход упрощает расширение
-      классов декораторов.
+      Р”РµРєРѕСЂР°С‚РѕСЂС‹ РјРѕРіСѓС‚ РІС‹Р·С‹РІР°С‚СЊ СЂРѕРґРёС‚РµР»СЊСЃРєСѓСЋ СЂРµР°Р»РёР·Р°С†РёСЋ РѕРїРµСЂР°С†РёРё, РІРјРµСЃС‚Рѕ С‚РѕРіРѕ,
+      С‡С‚РѕР±С‹ РІС‹Р·РІР°С‚СЊ РѕР±С‘СЂРЅСѓС‚С‹Р№ РѕР±СЉРµРєС‚ РЅР°РїСЂСЏРјСѓСЋ. РўР°РєРѕР№ РїРѕРґС…РѕРґ СѓРїСЂРѕС‰Р°РµС‚ СЂР°СЃС€РёСЂРµРЅРёРµ
+      РєР»Р°СЃСЃРѕРІ РґРµРєРѕСЂР°С‚РѕСЂРѕРІ.
      */
 public:
-    TicketDecorator(T* component) : Decorator(component) {
+    TicketDecorator(Ticket* component) : Decorator(component) {
     }
-    std::string Output() const override {
-        return "ConcreteDecoratorA(" + Decorator::Operation() + ")";
+    std::string Write() const override {
+        return "ticket :{" + Decorator::Write() +"}";
     }
 };
 #pragma endregion
 
 #pragma region Client Code
 /*
-  Клиентский код работает с фабриками и продуктами только через абстрактные
-  типы: Абстрактная Фабрика и Абстрактный Продукт. Это позволяет передавать
-  любой подкласс фабрики или продукта клиентскому коду, не нарушая его.
+  РљР»РёРµРЅС‚СЃРєРёР№ РєРѕРґ СЂР°Р±РѕС‚Р°РµС‚ СЃ С„Р°Р±СЂРёРєР°РјРё Рё РїСЂРѕРґСѓРєС‚Р°РјРё С‚РѕР»СЊРєРѕ С‡РµСЂРµР· Р°Р±СЃС‚СЂР°РєС‚РЅС‹Рµ
+  С‚РёРїС‹: РђР±СЃС‚СЂР°РєС‚РЅР°СЏ Р¤Р°Р±СЂРёРєР° Рё РђР±СЃС‚СЂР°РєС‚РЅС‹Р№ РџСЂРѕРґСѓРєС‚. Р­С‚Рѕ РїРѕР·РІРѕР»СЏРµС‚ РїРµСЂРµРґР°РІР°С‚СЊ
+  Р»СЋР±РѕР№ РїРѕРґРєР»Р°СЃСЃ С„Р°Р±СЂРёРєРё РёР»Рё РїСЂРѕРґСѓРєС‚Р° РєР»РёРµРЅС‚СЃРєРѕРјСѓ РєРѕРґСѓ, РЅРµ РЅР°СЂСѓС€Р°СЏ РµРіРѕ.
  */
-int  Lotery_Logic(int col, std::vector<Ticket>& vectorof_ticket, List<Ticket>& listof_ticket) {
-    Loto_Fabrick* f1 = new Loto_Fabrick();
+int  Lotery_Logic(AbstractFactory& factory,int col, std::vector<Loto_Ticket>& vectorof_ticket, List<Loto_Ticket>& listof_ticket) {
     
+    Lotery_Machine* generator = factory.CreateMachine();
     
-    int countofsold; std::cin >> countofsold;
-    delete f1;
+    for(int i=0;i<col;i++){
+        //vectorof_ticket.push_back(factory.CreateTicket());
+        listof_ticket.push_back( (Loto_Ticket *) factory.CreateTicket());
+    }
+    int countofsold; std::cin >> countofsold; 
+    delete generator;
     return 0;
 }
 
-/*Сохраняйте информацию о проведенных тиражах для обеспечения поиска
-данных в будущем. Реализуйте функционал обработки данных таким образом,
-чтобы тип коллекции, в которой будут храниться ваши данные, являлся
-параметром*/
-template<class T>
-int Save_Data(T& el, std::string filepath) {
-    T::iterator it=el;
-    TicketDecorator decor();
-    ofstream outputfile;             
+/*РЎРѕС…СЂР°РЅСЏР№С‚Рµ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РїСЂРѕРІРµРґРµРЅРЅС‹С… С‚РёСЂР°Р¶Р°С… РґР»СЏ РѕР±РµСЃРїРµС‡РµРЅРёСЏ РїРѕРёСЃРєР°
+РґР°РЅРЅС‹С… РІ Р±СѓРґСѓС‰РµРј. Р РµР°Р»РёР·СѓР№С‚Рµ С„СѓРЅРєС†РёРѕРЅР°Р» РѕР±СЂР°Р±РѕС‚РєРё РґР°РЅРЅС‹С… С‚Р°РєРёРј РѕР±СЂР°Р·РѕРј,
+С‡С‚РѕР±С‹ С‚РёРї РєРѕР»Р»РµРєС†РёРё, РІ РєРѕС‚РѕСЂРѕР№ Р±СѓРґСѓС‚ С…СЂР°РЅРёС‚СЊСЃСЏ РІР°С€Рё РґР°РЅРЅС‹Рµ, СЏРІР»СЏР»СЃСЏ
+РїР°СЂР°РјРµС‚СЂРѕРј*/
+int Save_Data(List<Loto_Ticket> &el, const std::string filepath) {
+    std::ofstream outputfile;
     outputfile.open(filepath);
+    /*T::iterator it=el;
+    TicketDecorator decor();!!wrong
+    
     while (it != el.end()) {
         decor(it);
         outputfile << decor.Output();
     }
-    outputfile.close();
+    */
+    for (Node<Loto_Ticket>* i = el.began(); i != nullptr; i = i->next){
+        Ticket* decor = new TicketDecorator(i->value);
+        outputfile << decor->Write();
+        std::cout<< decor->Write();
+        delete decor;
+    }
+
+        outputfile.close();
     return 0;
 }
+
 
 int main() {
     int col;
     std::cout << "Input count of tickets in lotery : ";
     std::cin >> col; std::cout<< std::endl;
 
-    std::vector<Ticket> vectorof_ticket;
-    List<Ticket> listof_ticket;
+    Loto_Fabrick* factory = new Loto_Fabrick();
 
-    Lotery_Logic(col, vectorof_ticket, listof_ticket);
+    std::vector<Loto_Ticket> vectorof_ticket = *new std::vector<Loto_Ticket>();
+    List<Loto_Ticket> listof_ticket = *new List<Loto_Ticket>();
 
-    Save_Data(vectorof_ticket,(std::string)"Vector.out");
-    Save_Data(listof_ticket, (std::string)"List.out");
+    Lotery_Logic(*factory, col, vectorof_ticket, listof_ticket);
 
+    //Save_Data(vectorof_ticket,(std::string)"Vector.json");
+    
+        Save_Data(listof_ticket,(std::string)"List.json");
+    delete factory;
     return 0;
 }
 #pragma endregion
